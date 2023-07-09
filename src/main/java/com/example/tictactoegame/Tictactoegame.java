@@ -42,7 +42,7 @@ public class Tictactoegame {
     }
 
     enum LineType {
-        ROW, COLUMN, DIAGONAL
+        ROW, COLUMN, LEFT_DIAGONAL, RIGHT_DIAGONAL
     }
 
     /**
@@ -50,16 +50,12 @@ public class Tictactoegame {
      * playersMoveCount array contains info about how many moves each player did
      * i.e. playersMoveCount[0] = 3 => first player did 3 moves,
      * playersMoveCount[1] = 2 => second player did 2 moves
-     * rowsCount/colsCount contains info about the last square processed in row/column
-     * rowsCount[0][1] = 2 => 1st row(index 0) contains 2 items in a row(value 2), filled by player 2(index 1)
+     * rowsCount/colsCount contains info about the moves, done by players on the specific row
+     * if rowsCount[i] == 3/-3 => 1st/2nd player filled the row/column
+     * diagonalsCount contains 2 values => diagonalsCount[0] for left diagonal, diagonalsCount[1] for right
      * 
      * playerWinningLaneFound determines, whether winning condition for a player is in effect
-     * i.e. playerWinningLaneFound[1] = true => second player filled the line of LINE_SIZE size
-     * 
-     * diagonalsCount contains data about filling diagonal lines by each player
-     * diagonalsCount[playerIndex] - contains player's data about left(index 0) and right(index 1) diagonals
-     * i.e. diagonalsCount[0][1] = 2 => first player filled 2 squares on the right diagonal
-     * in case the parameters for board/line/players number would change - implementation should be changed
+     * i.e. playerWinningLaneFound[1] = true => second player filled the line
      */
     class GameState {
         private int[] playersMoveCount = new int[2];
@@ -67,32 +63,20 @@ public class Tictactoegame {
         private int[] colsCount = new int[BOARD_DIMENSION_SIZE];
         private boolean[] playerWinningLaneFound = new boolean[2];
         private int[] diagonalsCount = new int[2];
-        private boolean bothPlayersFilledLanes = false;
 
         private GameState(final char[][] board) {
             validateBoard(board);
             for (int row = 0; row < BOARD_DIMENSION_SIZE; ++row) {
                 for (int col = 0; col < BOARD_DIMENSION_SIZE; ++col) {
-                    checkRow(board, row, col);
-                    checkColumn(board, row, col);
-                    checkDiagonal(board, row, col);
+                    for (LineType lineType: LineType.values()) {
+                        checkLine(board, row, col, lineType);
+                    }
                 }
             }
         }
-
-        private void checkColumn(final char[][] board, final int row, final int col) {
-            checkLine(board, row, col, LineType.ROW);
-        }
     
-        private void checkRow(final char[][] board, final int row, final int col) {
-            checkLine(board, row, col, LineType.COLUMN);
-        }
-
-        private void checkDiagonal(final char[][] board, final int row, final int col) {
-            checkLine(board, row, col, LineType.DIAGONAL);
-        }
-    
-        private void checkLine(final char[][] board, final int row, final int col, final LineType lineType) {
+        private void checkLine(final char[][] board, final int row, final int col, 
+                                final LineType lineType) {
             int increment = getSymbolIncrement(board, row, col);
             if (increment != 0) {
                 int[] countArray = getStatsArray(lineType);
@@ -104,14 +88,16 @@ public class Tictactoegame {
         }
 
         private int[] getStatsArray(final LineType lineType) {
-            return lineType == LineType.ROW ? rowsCount : lineType == LineType.COLUMN ? colsCount : diagonalsCount;
+            return lineType == LineType.ROW ? rowsCount : 
+                    lineType == LineType.COLUMN ? colsCount : 
+                    diagonalsCount;
         }
 
         private int getStatsIndex(final LineType lineType, final int row, final int col) {
             return lineType == LineType.ROW ? row : 
                     lineType == LineType.COLUMN ? col : 
-                    row == col ? LEFT_DIAGONAL_INDEX :
-                    row == BOARD_DIMENSION_SIZE - 1 - col ? RIGHT_DIAGONAL_INDEX : -1;
+                    lineType == LineType.LEFT_DIAGONAL && row == col ? LEFT_DIAGONAL_INDEX :
+                    lineType == LineType.RIGHT_DIAGONAL && row == BOARD_DIMENSION_SIZE - 1 - col ? RIGHT_DIAGONAL_INDEX : -1;
         }
 
         private int getSymbolIncrement(final char[][] board, final int row, final int col) {
