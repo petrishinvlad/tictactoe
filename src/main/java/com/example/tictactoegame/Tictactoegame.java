@@ -3,20 +3,15 @@ package com.example.tictactoegame;
 import java.util.*;
 
 /**
- * Emulates the TicTacToe game, based on provided moves
- * All coordinates on the board are assigned in the following way:
- * [0,0], [0,1], [0,2] 
- * [1,0], [1,1], [1,2] 
- * [2,0], [2,1], [2,2] 
+ * Emulates the TicTacToe game, based on provided board
  * The size of the board can be changed by BOARD_DIMENSION_SIZE constant
  * Based on the game board, we are looking for the winner on the specific board
- * if not enough moves - "Not enough moves"
+ * if not enough moves are done - "Not enough moves"
  * first player winner - "A"
  * second player winner - "B"
  * no winner - "Draw"
+ * if both players filled the lanes - "Impossible position"
  * GameState is the wrapper for holding game state
- * We assume, that only 2 players can play TicTacToe. 
- * In this case, we can calculate score by incrementing(first player) and decrementing(second player) number of selected squares in row/column/diagonal
  * 
  * @author  Vladyslav Petryshyn
  * @since 1.2
@@ -52,7 +47,8 @@ public class Tictactoegame {
      * playersMoveCount array contains info about how many moves each player did
      * i.e. playersMoveCount[0] = 3 => first player did 3 moves,
      * playersMoveCount[1] = 2 => second player did 2 moves
-     * rowsCount/colsCount - ????
+     * rowsCount/colsCount contains info about the last square processed in row/column
+     * rowsCount[0][1] = 2 => 1st row(index 0) contains 2 items in a row(value 2), filled by player 2(index 1)
      * 
      * playerWinningLaneFound determines, whether winning condition for a player is in effect
      * i.e. playerWinningLaneFound[1] = true => second player filled the line of LINE_SIZE size
@@ -78,6 +74,7 @@ public class Tictactoegame {
      * - SECOND_PLAYER 
      * - DRAW 
      * - NOT_ENOUGH_MOVES
+     * - IMPOSSIBLE_POSITION
      * @throws IllegalArgumentException
      */
     public GameResult getWinner(final char[][] board) {
