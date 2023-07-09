@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Tictactoe.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">tictactoe</a> &gt; <a href="index.source.html" class="el_package">com.example.tictactoegame</a> &gt; <span class="el_source">Tictactoe.java</span></div><h1>Tictactoe.java</h1><pre class="source lang-java linenums">package com.example.tictactoegame;
+
+import java.util.*;
+
+/**
+ * Emulates the TicTacToe game, based on provided moves
+ * All coordinates on the board are assigned in the following way:
+ * [0,0], [0,1], [0,2] 
+ * [1,0], [1,1], [1,2] 
+ * [2,0], [2,1], [2,2] 
+ * The size of the board can be changed by BOARD_DIMENSION_SIZE constant
+ * Assumption is that players are making moves one by one. &quot;Moves&quot; array contains all moves done by the players
+ * if not enough moves - &quot;Not enough moves&quot;
+ * first player winner - &quot;A&quot;
+ * second player winner - &quot;B&quot;
+ * no winner - &quot;Draw&quot;
+ * GameState is the wrapper for holding game state
+ * We assume, that only 2 players can play TicTacToe. 
+ * In this case, we can calculate score by incrementing(first player) and decrementing(second player) number of selected squares in row/column/diagonal
+ * 
+ * @author  Vladyslav Petryshyn
+ * @since 1.2
+ */
+
+<span class="fc" id="L25">public class Tictactoe {</span>
+    private static final int DIMENSION_COUNT = 2;
+    private static final int DIAGONALS_COUNT = 2;
+    private static final int LEFT_DIAGONAL_INDEX = 0;
+    private static final int RIGHT_DIAGONAL_INDEX = 1;
+    protected static final int BOARD_DIMENSION_SIZE = 3;
+    private static final int MAX_MOVES_NUMBER = BOARD_DIMENSION_SIZE * BOARD_DIMENSION_SIZE;
+    protected static final String WRONG_MOVES_INPUT = &quot;Wrong input&quot;;
+    private static final int FIRST_PLAYER_INCREMENT = 1;
+    private static final int SECOND_PLAYER_INCREMENT = -1;
+    
+<span class="fc" id="L36">    enum GameResult {</span>
+<span class="fc" id="L37">        FIRST_PLAYER, </span>
+<span class="fc" id="L38">        SECOND_PLAYER, </span>
+<span class="fc" id="L39">        DRAW, </span>
+<span class="fc" id="L40">        NOT_ENOUGH_MOVES;</span>
+    }
+
+<span class="fc" id="L43">    class GameState {</span>
+<span class="fc" id="L44">        private int[] rowsCount = new int[BOARD_DIMENSION_SIZE];</span>
+<span class="fc" id="L45">        private int[] colsCount = new int[BOARD_DIMENSION_SIZE];</span>
+<span class="fc" id="L46">        private int[] diagonalsCount = new int[DIAGONALS_COUNT];</span>
+<span class="fc" id="L47">        private Set&lt;String&gt; filledSquares = new HashSet&lt;&gt;();</span>
+    }
+
+    /**
+     * @param moves - 2-dimensional array of moves, that are done by both players(one by one).
+     * 1st dimension is a move index, 2nd - board dimension index(0 - row, 1 - column) 
+     * @return GameResult. Possible options are:
+     * - FIRST_PLAYER 
+     * - SECOND_PLAYER 
+     * - DRAW 
+     * - NOT_ENOUGH_MOVES
+     * @throws IllegalArgumentException
+     */
+    public GameResult getWinner(final int[][] moves) {
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (moves == null) return GameResult.NOT_ENOUGH_MOVES;</span>
+<span class="fc" id="L62">        GameState gameState = new GameState();</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        for (int i = 0; i &lt; moves.length; ++i) {</span>
+<span class="fc" id="L64">            int[] move = moves[i];</span>
+<span class="fc" id="L65">            validateMove(move, gameState);</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">            int increment = i % 2 == 0 ? FIRST_PLAYER_INCREMENT : SECOND_PLAYER_INCREMENT;</span>
+<span class="fc" id="L67">            makeMove(gameState, move, increment);</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">            if (firstPlayerWon(gameState, move)) {</span>
+<span class="fc" id="L69">                return GameResult.FIRST_PLAYER;</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            } else if (secondPlayerWon(gameState, move)) {</span>
+<span class="fc" id="L71">                return GameResult.SECOND_PLAYER;</span>
+            }
+<span class="fc" id="L73">            gameState.filledSquares.add(getSerializedCoordinates(move));</span>
+        }
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (moves.length == MAX_MOVES_NUMBER) return GameResult.DRAW;</span>
+<span class="fc" id="L76">        return GameResult.NOT_ENOUGH_MOVES;</span>
+    }
+
+    private void validateMove(final int[] move, 
+                              final GameState gameState) {
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (move.length != DIMENSION_COUNT</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">            || validateDimensionBounds(getRowIndex(move)) </span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            || validateDimensionBounds(getColIndex(move)) </span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">            || gameState.filledSquares.contains(getSerializedCoordinates(move))) {</span>
+<span class="fc" id="L85">            throw new IllegalArgumentException(WRONG_MOVES_INPUT);</span>
+        }
+<span class="fc" id="L87">    }</span>
+
+    private void makeMove(final GameState gameState, 
+                            final int[] move, 
+                            final int increment) {
+<span class="fc" id="L92">        int rowIndex = getRowIndex(move);</span>
+<span class="fc" id="L93">        int colIndex = getColIndex(move);</span>
+<span class="fc" id="L94">        gameState.rowsCount[rowIndex] += increment;</span>
+<span class="fc" id="L95">        gameState.colsCount[colIndex] += increment;</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (rowIndex == colIndex) {</span>
+<span class="fc" id="L97">            gameState.diagonalsCount[LEFT_DIAGONAL_INDEX] += increment;</span>
+        }
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        if (rowIndex == BOARD_DIMENSION_SIZE - 1 - colIndex) {</span>
+<span class="fc" id="L100">            gameState.diagonalsCount[RIGHT_DIAGONAL_INDEX] += increment;</span>
+        }
+<span class="fc" id="L102">    }</span>
+
+    private boolean firstPlayerWon(final GameState gameState,
+                                   final int[] lastMove) {
+<span class="fc" id="L106">        return playerWon(gameState, lastMove, BOARD_DIMENSION_SIZE);             </span>
+    }
+
+    private boolean secondPlayerWon(final GameState gameState,
+                                    final int[] lastMove) {
+<span class="fc" id="L111">        return playerWon(gameState, lastMove, -BOARD_DIMENSION_SIZE);</span>
+    }
+
+    private boolean playerWon(final GameState gameState,
+                              final int[] lastMove,
+                              final int winCondition) {
+<span class="fc" id="L117">        int rowIndexToCheck = getRowIndex(lastMove);</span>
+<span class="fc" id="L118">        int colIndexToCheck = getColIndex(lastMove);</span>
+
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        boolean rowCrossed = gameState.rowsCount[rowIndexToCheck] == winCondition;</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        boolean colCrossed = gameState.colsCount[colIndexToCheck] == winCondition;</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">        boolean diagonalCrossed = gameState.diagonalsCount[LEFT_DIAGONAL_INDEX] == winCondition</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">                                || gameState.diagonalsCount[RIGHT_DIAGONAL_INDEX] == winCondition;</span>
+<span class="fc bfc" id="L124" title="All 6 branches covered.">        return rowCrossed || colCrossed || diagonalCrossed;</span>
+    }
+
+    private int getRowIndex(final int[] move) {
+<span class="fc" id="L128">        return move[0];</span>
+    }
+
+    private int getColIndex(final int[] move) {
+<span class="fc" id="L132">        return move[1];</span>
+    }
+
+    private boolean validateDimensionBounds(final int moveCoordinate) {
+<span class="fc bfc" id="L136" title="All 4 branches covered.">        return moveCoordinate &lt; 0 || moveCoordinate &gt;= BOARD_DIMENSION_SIZE;</span>
+    }
+
+    private String getSerializedCoordinates(final int[] move) {
+<span class="fc" id="L140">        return String.join(&quot;;&quot;, String.valueOf(move[0]), String.valueOf(move[1]));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.4.201905082037</span></div></body></html>
